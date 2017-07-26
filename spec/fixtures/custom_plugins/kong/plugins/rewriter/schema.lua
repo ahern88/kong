@@ -1,5 +1,6 @@
-return { 
+return {
   fields = {
-    value = { typ = "string" }
+    value = { typ = "string" },
+    extra = { typ = "string", default = "extra" }
   }
 }
