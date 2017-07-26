@@ -2,7 +2,7 @@ local client = require "resty.websocket.client"
 local helpers = require "spec.helpers"
 local cjson = require "cjson"
 
-pending("Websockets", function()
+describe("Websockets", function()
   -- Pending (2017/06/16)
   -- Since sockb.in appears to be offline, we'll need to find a way to test
   -- WebSocket proxying support differently.
@@ -15,10 +15,10 @@ pending("Websockets", function()
       name = "ws",
       uris = { "/ws" },
       strip_uri = true,
-      upstream_url = "http://sockb.in"
+      upstream_url = "http://127.0.0.1:55555"
     })
 
-    assert(helpers.start_kong())
+    assert(helpers.start_kong({nginx_conf = "spec/fixtures/custom_nginx.template"}))
   end)
 
   teardown(function()
@@ -28,10 +28,10 @@ pending("Websockets", function()
   local function make_request(uri)
     local wb = assert(client:new())
     assert(wb:connect(uri))
-    assert(wb:send_text("testing Kong"))
+    assert(wb:send_text('{"message": "hello websocket"}'))
 
-    local data = assert(wb:recv_frame())
-    assert.equal("testing Kong", cjson.decode(data).reqData)
+    local frame = assert(wb:recv_frame())
+    assert.equal("hello websocket", cjson.decode(frame).message)
 
     assert(wb:send_close())
 
@@ -39,7 +39,7 @@ pending("Websockets", function()
   end
 
   it("works without Kong", function()
-    assert(make_request("ws://sockb.in"))
+    assert(make_request("ws://127.0.0.1:55555/"))
   end)
 
   it("works with Kong", function()
